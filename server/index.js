@@ -41,12 +41,12 @@ function broadcastOnlineList() {
   const online = [];
   for (const [, info] of clients) {
     online.push({
-      username: info.username,
-      userId:   info.userId,
-      avatar:   info.avatar,
-      role:     info.role,
+      username:  info.username,
+      userId:    info.userId,
+      avatar:    info.avatar,
+      role:      info.role,
       roleColor: info.roleColor,
-      badge:    info.badge,
+      badge:     info.badge,
     });
   }
   broadcastAll({ type: "online_list", users: online });
@@ -109,6 +109,35 @@ wss.on("connection", (ws, req) => {
         messageHistory.push(entry);
         if (messageHistory.length > MAX_HISTORY) messageHistory.shift();
 
+        broadcastAll(entry);
+        break;
+      }
+
+      case "share": {
+        const info = clients.get(ws);
+        if (!info) return;
+
+        const entry = {
+          type:      "share",
+          msgType:   "share",
+          id:        `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          username:  info.username,
+          userId:    info.userId,
+          avatar:    info.avatar,
+          role:      info.role,
+          roleColor: info.roleColor,
+          badge:     info.badge,
+          gameId:    msg.gameId    || "",
+          jobId:     msg.jobId     || "",
+          gameTitle: msg.gameTitle || "",
+          gameThumb: msg.gameThumb || "",
+          timestamp: Date.now(),
+        };
+
+        messageHistory.push(entry);
+        if (messageHistory.length > MAX_HISTORY) messageHistory.shift();
+
+        // Broadcast to ALL including sender so they see their own card
         broadcastAll(entry);
         break;
       }
